@@ -1,6 +1,6 @@
-const foovarExports = function() {
+const foovarExports = function(globalOptions) {
   return function(stylus) {
-    stylus.define('foovar', require('./foovar.js'));
+    stylus.define('foovar', require('./foovar.js')(globalOptions));
   };
 };
 

@@ -6,12 +6,14 @@ function convertToPlainObject(foovarValue, options) {
   }, options);
 
   switch (options.from) {
-  case 'value':
-    return convertToPlainObjectFromValue(foovarValue);
-  case 'css':
-    return convertToPlainObjectFromCss(foovarValue);
-  case 'type':
-    return convertToPlainObjectFromType(foovarValue);
+    case 'value':
+      return convertToPlainObjectFromValue(foovarValue);
+    case 'css':
+      return convertToPlainObjectFromCss(foovarValue);
+    case 'type':
+      return convertToPlainObjectFromType(foovarValue);
+    case 'tree':
+      return convertToPlainObjectFromTree(foovarValue);
   }
 }
 
@@ -86,6 +88,30 @@ function convertToPlainObjectFromType(foovarValue) {
         return acc;
       }, {});
     }
+  }
+}
+
+function convertToPlainObjectFromTree(foovarValue) {
+  var css = foovarValue.css,
+      type = foovarValue.type;
+
+  var value = foovarValue;
+  if (foovarValue.__is_foovarValue) {
+    value = foovarValue();
+  }
+  if (isNoRecursiveValue(value)) {
+    return {value: value, css: css, type: type};
+  } else if (Array.isArray(value)) {
+    return {value: value.map(convertToPlainObjectFromValue), css: css, type: type};
+  } else {
+    return {
+      value: Object.keys(value).reduce(function (acc, k) {
+        acc[k] = convertToPlainObjectFromTree(value[k]);
+        return acc;
+      }, {}),
+      css: css,
+      type: type
+    };
   }
 }
 
