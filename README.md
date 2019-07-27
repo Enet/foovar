@@ -50,7 +50,7 @@ module.exports = {
 
 #### `foovar(path: string, options: hash)`
 
-Generate variables file.
+Generate variables file. Hash `options` is required!
 
 `vars.styl`
 ```stylus
@@ -60,7 +60,15 @@ bar = 'some text'
 foovar('src/StyleDefinitions.js')
 ```
 
-Path resolving is absolute if start with `/`. Otherwise relative from `process.cwd()`.
+Path resolving is absolute if start with `/`. Otherwise relative from `process.cwd()`. Since the forked version 0.6.3, you can use `foovar` with TypeScript like in example below.
+```stylus
+foovar('sources/variables.ts', {
+  plainObject: 'tree',
+  types: 'sources/variables.d.ts',
+  silent: true,
+  nib: true,
+})
+```
 
 ##### `options.include: string`
 Export only matched name.
@@ -76,10 +84,19 @@ Export only unmatched name.
 ##### `options.noGeneratedLog: boolean`
 Don't display message to console if true.
 
+##### `options.types: string`
+Generate typings in `tree` mode and write them to the file (see `plainObject` option).
+
+##### `options.nib: boolean`
+Define either ignore names, imported by `nib` or not.
+
+###### `options.silent: boolean`
+Don't write warnings to console.
+
 ##### `options.compress: boolean`
 Compress the exporting file if true.
 
-##### `options.plainObject: boolean | 'value' | 'css' | 'type'`
+##### `options.plainObject: boolean | 'value' | 'css' | 'type' | 'tree'`
 Export plain object. (but not object literal)
 
 ##### `options.propertyCase: 'raw' | 'camel' | 'pascal' | kebab | 'snake' | 'header' | 'constant'`
@@ -171,6 +188,8 @@ const obj = convertToPlainObject(StyleDefinitions);
 //   }
 // }
 ```
+
+Or just use `tree` mode.
 
 #### `options.from: 'value' | 'css' | 'type'`
 

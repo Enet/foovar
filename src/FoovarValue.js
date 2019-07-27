@@ -61,7 +61,7 @@ module.exports = class FoovarValue {
       case 'cubic-bezier':
         return this.genCubicBezierCss(exp);
       default:
-        console.error(`Can't generate CSS string: stylus.nodes.Call ${ exp.name }`);
+        !this.silent && console.error(`Can't generate CSS string: stylus.nodes.Call ${ exp.name }`);
         return;
       }
     case 'Boolean':
@@ -69,7 +69,7 @@ module.exports = class FoovarValue {
     case 'Object':
       return void 0;
     default:
-      console.error(`Can't generate CSS string: ${ exp.constructorName }`);
+      !this.silent && console.error(`Can't generate CSS string: ${ exp.constructorName }`);
     }
   }
 
@@ -129,11 +129,11 @@ module.exports = class FoovarValue {
       case 'cubic-bezier':
         return exp.name;
       default:
-        console.error(`Can't resolve type: stylus.nodes.Call ${ exp.name }`);
+        !this.silent && console.error(`Can't resolve type: stylus.nodes.Call ${ exp.name }`);
         return;
       }
     default:
-      console.error(`Can't resolve type: ${ exp.constructorName }`);
+      !this.silent && console.error(`Can't resolve type: ${ exp.constructorName }`);
     }
   }
 
@@ -159,12 +159,12 @@ module.exports = class FoovarValue {
       case 'cubic-bezier':
         return this.resolveCubicBezireValue(exp);
       default:
-        console.error(`Can't resolve value: stylus.nodes.Call ${ this.name }`);
+        !this.silent && console.error(`Can't resolve value: stylus.nodes.Call ${ this.name }`);
         return;
       }
 
     default:
-      console.error(`Can't resolve value: ${ exp.constructorName }`);
+      !this.silent && console.error(`Can't resolve value: ${ exp.constructorName }`);
     }
   }
 

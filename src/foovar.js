@@ -67,7 +67,7 @@ module.exports = function foovarFuncFactory(globalOptions) {
     const fullPath = /^\//.test(outPath) ? outPath : path.resolve(process.cwd(), outPath);
 
     var localOptions = optionsResolver(options);
-    let { include, exclude, nib, noGeneratedLog, compress, plainObject, propertyCase } = localOptions;
+    let { include, exclude, nib, silent, types, noGeneratedLog, compress, plainObject, propertyCase } = localOptions;
 
     const incReg = localOptions.hasOwnProperty('include')
       ? include && include.constructorName === 'String' && new RegExp(include.val)
@@ -78,6 +78,15 @@ module.exports = function foovarFuncFactory(globalOptions) {
     const excNib = localOptions.hasOwnProperty('nib')
       ? nib && nib.val
       : globalOptions.nib;
+    const isSilent = localOptions.hasOwnProperty('silent')
+      ? silent && silent.val
+      : globalOptions.silent;
+    let typesPath = localOptions.hasOwnProperty('types')
+      ? types && types.val
+      : globalOptions.types;
+    if (typesPath) {
+      typesPath = /^\//.test(typesPath) ? typesPath : path.resolve(process.cwd(), typesPath);
+    }
     const noGen = localOptions.hasOwnProperty('noGen')
       ? noGeneratedLog && noGeneratedLog.val
       : globalOptions.noGen;
@@ -148,8 +157,9 @@ module.exports = function foovarFuncFactory(globalOptions) {
     const requirePathForStylusExpression = TEST ? `'${ path.resolve(process.cwd(), 'src/StylusExpression.js') }'` : '\'foovar/lib/StylusExpression\'';
     const requirePathForConvertToPlainObject = TEST ? `'${ path.resolve(process.cwd(), 'src/convertToPlainObject.js') }'` : '\'foovar/lib/convertToPlainObject\'';
     const requireConvertToPlainObject = plain ? `var p=require(${requirePathForConvertToPlainObject});` : '';
-    const setPropertyCase = `F.case=${FoovarValueCase || null};`;
-    let codeStr = `(function(){var F=require(${requirePathForFoovarValue});${setPropertyCase}var S=require(${requirePathForStylusExpression});${requireConvertToPlainObject}module.exports={${ comp ? '' : '\n' }${ body }};})();`;
+    const setPropertyCase = `F.case=${FoovarValueCase || null}`;
+    let codeStr = `(function(){var F=require(${requirePathForFoovarValue});${setPropertyCase};F.silent=${!!isSilent};var S=require(${requirePathForStylusExpression});${requireConvertToPlainObject}module.exports={${ comp ? '' : '\n' }${ body }};})();`;
+    let typesStr = '';
 
     if (plain === `'tree'`) {
       const execFn = new Function('require', 'module', codeStr);
@@ -158,14 +168,53 @@ module.exports = function foovarFuncFactory(globalOptions) {
       execFn(function () {
         return [FoovarValue, StylusExpression, convertToPlainObject][r++];
       }, m);
-      codeStr = JSON.stringify(m.exports);
+      codeStr = 'export default ' + JSON.stringify(m.exports) + ';';
+
+      if (typesPath) {
+        const walk = (value) => {
+          if (value === null) {
+            typesStr += 'null, ';
+          } else if (value === undefined) {
+            typesStr += 'undefined, ';
+          } else if (value instanceof Array) {
+            typesStr += '[';
+            value.forEach((item) => walk(item));
+            if (value.length) {
+              typesStr = typesStr.slice(0, -2);
+            }
+            typesStr += '], ';
+          } else if (typeof value === 'object') {
+            typesStr += '{';
+            let removeComma = false;
+            for (let v in value) {
+              removeComma = true;
+              typesStr += `"${v}": `;
+              walk(value[v]);
+            }
+            if (removeComma) {
+              typesStr = typesStr.slice(0, -2);
+            }
+            typesStr += '}, ';
+          } else {
+            typesStr += typeof typesStr + ', ';
+          }
+        };
+        walk(m.exports);
+        typesStr = [
+          'type StylusScope = ' + typesStr.slice(0, -2) + ';',
+          'declare const stylusScope: StylusScope;',
+          'export default stylusScope;',
+        ].join('\n');
+      }
     }
 
 
     if (typeof globalOptions.writeFile === 'function') {
       globalOptions.writeFile(fullPath, codeStr);
+      typesPath && globalOptions.writeFile(typesPath, typesStr);
     } else {
       fs.writeFileSync(fullPath, codeStr, 'utf8');
+      typesPath && fs.writeFileSync(typesPath, typesStr, 'utf8');
     }
     if (!noGen) { console.log(`foovar: generated ${ fullPath }`); }
   };

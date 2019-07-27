@@ -1,5 +1,11 @@
 # History
 
+## v0.6.3 July 27, 2019
+- [New] Set `plainObject` to `tree`!
+- [New] Ignore warnings using new flag `silent`
+- [New] Ignore variables from nib (set the flag `nib` to `true`)
+- [New] Generate typings in `tree` mode (`types` option specifies the path of typings)
+
 ## v0.6.2 July 14, 2017
 - [Fix] Forgot compiling
 
